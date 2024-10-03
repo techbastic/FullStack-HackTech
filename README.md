@@ -1,3 +1,4 @@
 # FullStack-HackTech
 
-## Full-Stack Project 
+### TalkBastic - A social media application. 
+
