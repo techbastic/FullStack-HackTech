@@ -16,10 +16,13 @@ exports.register = async (req, res) => {
             return res.status(409).json({ message: 'User already exists' });
         }
 
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         const user = await User.create({
             username,
             email,
-            password
+            password: hashedPassword
         });
 
         const token = generateToken(user._id);
@@ -48,7 +51,7 @@ exports.login = async (req, res) => {
             return res.status(404).json({ message: 'No user found' });
         }
 
-        const isMatch = await user.matchPassword(password);
+        const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
