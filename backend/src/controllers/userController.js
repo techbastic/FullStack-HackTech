@@ -1,25 +1,25 @@
-const User = require('../models/userModel');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+import { findOne, create, findById } from '../models/userModel';
+import { sign } from 'jsonwebtoken';
+import { genSalt, hash, compare } from 'bcrypt';
 
 const generateToken = (userId) => {
-    return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    return sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
-exports.register = async (req, res) => {
+export async function register(req, res) {
     const { username, email, password } = req.body;
 
     try {
-        const userExists = await User.findOne({ email });
+        const userExists = await findOne({ email });
 
         if (userExists) {
             return res.status(409).json({ message: 'User already exists' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const salt = await genSalt(10);
+        const hashedPassword = await hash(password, salt);
 
-        const user = await User.create({
+        const user = await create({
             username,
             email,
             password: hashedPassword
@@ -39,19 +39,19 @@ exports.register = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-};
+}
 
-exports.login = async (req, res) => {
+export async function login(req, res) {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findOne({ email });
+        const user = await findOne({ email });
 
         if (!user) {
             return res.status(404).json({ message: 'No user found' });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await compare(password, user.password);
 
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
@@ -71,27 +71,27 @@ exports.login = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-};
+}
 
-exports.changePassword = async (req, res) => {
+export async function changePassword(req, res) {
     const { oldPassword, newPassword } = req.body;
     const userId = req.user.id;
 
     try {
-        const user = await User.findById(userId);
+        const user = await findById(userId);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        const isMatch = await compare(oldPassword, user.password);
 
         if (!isMatch) {
             return res.status(401).json({ message: 'Old password is incorrect' });
         }
         
-        const salt = await bcrypt.genSalt(10);
-        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+        const salt = await genSalt(10);
+        const hashedNewPassword = await hash(newPassword, salt);
 
         user.password = hashedNewPassword;
         await user.save();
@@ -106,9 +106,9 @@ exports.changePassword = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-};
+}
 
-exports.logout = async (req, res) => {
+export async function logout(req, res) {
     try {
         const { userId } = req.user; // Assuming you have a middleware to verify user
 
@@ -118,4 +118,4 @@ exports.logout = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-};
+}
