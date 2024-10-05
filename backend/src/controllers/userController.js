@@ -73,6 +73,41 @@ exports.login = async (req, res) => {
     }
 };
 
+exports.changePassword = async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Old password is incorrect' });
+        }
+        
+        const salt = await bcrypt.genSalt(10);
+        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+        user.password = hashedNewPassword;
+        await user.save();
+        
+        req.redisClient.del(userId.toString());
+
+        const token = generateToken(user._id);
+        
+        req.redisClient.set(user._id.toString(), token, 'EX', 3600);
+
+        res.status(200).json({ message: 'Password changed successfully', token });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 exports.logout = async (req, res) => {
     try {
         const { userId } = req.user; // Assuming you have a middleware to verify user
