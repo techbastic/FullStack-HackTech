@@ -110,7 +110,7 @@ export async function changePassword(req, res) {
 
 export async function logout(req, res) {
     try {
-        const { userId } = req.user; // Assuming you have a middleware to verify user
+        const userId = req.user.id;
 
         req.redisClient.del(userId.toString());
 
