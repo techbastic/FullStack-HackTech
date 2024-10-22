@@ -1,11 +1,14 @@
-import React from 'react'
-import './App.css'
-
+import React from 'react';
+import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Chatpage from './Chatpage';
 
 const App = () => {
   return (
-    <div>Talk-Bastic</div>
-  )
+    <div className="App">
+      <Chatpage />
+    </div>
+  );
 }
 
-export default App
+export default App;
